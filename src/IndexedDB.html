@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta charset="utf-8">
+		<title>Base de Datos con JavaScript</title>
+		<script type="text/javascript">
+			var bd;
+			function iniciar(){
+	
+				MostrarDatos=document.getElementById("MostrarDatos");
+				
+				boton=document.getElementById("grabar");
+				boton.addEventListener("click",agregarobjeto, false);
+
+				boton=document.getElementById("buscar");
+				boton.addEventListener("click",buscarobjeto, false);
+/*
+				boton=document.getElementById("actualizar");
+				boton.addEventListener("click",actualizarobjeto, false);
+
+				boton=document.getElementById("eliminar");
+				boton.addEventListener("click",eliminarobjeto, false);*/
+
+				var solicitud=indexedDB.open("sistemas");
+	
+				solicitud.onsuccess=function(e){
+					bd=e.target.result;
+				}
+	
+				solicitud.onupgradeneeded=function(e){
+					bd=e.target.result;
+					bd.createObjectStore("gente", {keyPath: "nombre"});
+				}	
+			}
+
+			function agregarobjeto(){
+				var nombre=document.getElementById("nombre").value;
+				var apellido=document.getElementById("apellido").value;
+				var identificacion=document.getElementById("identificacion").value;
+				var numero=document.getElementById("numero").value;
+				var facultad=document.getElementById("facultad").value;
+				var programa=document.getElementById("programa").value;
+				var semestre=document.getElementById("semestre").value;
+				var asignatura=document.getElementById("asignatura").value;
+				var transaccion=bd.transaction(["gente"], "readwrite");
+				var almacen=transaccion.objectStore("gente");
+				var agregar=almacen.add({nombre: nombre, apellido: apellido, identificacion: identificacion, numero: numero, facultad: facultad, 
+				programa: programa, semestre: semestre, asignatura: asignatura});
+
+				agregar.addEventListener("success", mostrar, false);
+				document.getElementById("nombre").value=""
+				document.getElementById("apellido").value=""
+				document.getElementById("identificacion").value=""
+				document.getElementById("numero").value=""
+				document.getElementById("facultad").value=""
+				document.getElementById("programa").value=""
+				document.getElementById("semestre").value=""
+				document.getElementById("asignatura").value=""	
+			}
+
+			function buscarobjeto(){
+				var key = document.querySelector("#numero").value;
+				console.log("Dato a buscar: " + key);
+				if(key === "" || isNaN(key)) return;
+				var transaccion=bd.transaction(["gente"],"readonly");
+				var almacen=transaccion.objectStore("gente");
+				var buscar = almacen.get(Number(key));
+			 	console.log("Dato en base de datos: " + buscar);
+				//buscar.addEventListener("success", mostrar_u, false);
+				/*buscar.onsuccess = function(e) {
+					console.log("Dato en base de datos: " + buscar.result.nombre);
+    				document.querySelector("#status").innerHTML = buscar.result.nombre + buscar.result.apellido;
+
+				};*/
+			}
+
+			function mostrar_u(e){
+				MostrarDatos.innerHTML="";
+				var transaccion=bd.transaction(["gente"],"readonly");
+				var almacen=transaccion.objectStore("gente");
+				var cursor=almacen.openCursor();
+				cursor.addEventListener("success", mostrarDatos, false);
+			}
+
+			function mostrar(){
+				MostrarDatos.innerHTML="";
+				var transaccion=bd.transaction(["gente"],"readonly");
+				var almacen=transaccion.objectStore("gente");
+				var cursor=almacen.openCursor();
+				cursor.addEventListener("success", mostrarDatos, false);
+			}
+
+			window.addEventListener("load", iniciar, false);
+
+			function mostrarDatos(e){
+				var cursor=e.target.result;
+				if(cursor){
+					MostrarDatos.innerHTML+="<div><table border=1></caption><thead>" 
+					+ "<tr> <td width=85>" + cursor.value.nombre 
+					+ "</td><td width=85>" + cursor.value.apellido 
+					+ "</td><td width=85>" + cursor.value.identificacion 
+					+ "</td><td width=85>" + cursor.value.numero 
+					+ "</td><td width=85>" + cursor.value.facultad 
+					+ "</td><td width=85>" + cursor.value.programa 
+					+ "</td><td width=85>" + cursor.value.semestre 
+					+ "</td><td width=85>" + cursor.value.asignatura 
+					+ "</td></tr></thead></table></div>";
+					cursor.continue();
+				}
+			}                	
+		</script>
+	</head>
+	<body>    	
+		<form name="formulario">
+			<div id="contenedor">
+				<section id="cajaformulario">    
+					<table border=1>
+						<caption><B>Registro de Estudiantes</B></caption>
+							<thead>
+								<tr>
+									<th><input type="text" id="nombre" placeholder="Introducir nombre" /></th>
+									<th><input type="text" id="apellido" placeholder="Introducir apellido" /></th>
+									<th><input type="text" id="identificacion" placeholder="Introducir tipo identificacion" /> </th>
+									<th><input type="text" id="numero" placeholder="Introducir # de identificacion" /></th>
+								</tr>
+								<tr>
+								    
+									<th><input type="text" id="facultad" placeholder="Introducir facultad" /></th>
+									<th><input type="text" id="programa" placeholder="Introducir programa" /></th>
+									<th><input type="text" id="semestre" placeholder="Introducir semestre" /></th>
+									<th><input type="text" id="asignatura" placeholder="Introducir asignatura" /></th>						
+								</tr>
+								<tr>
+									<th colspan=8>	<button type="button" name="grabar" 	id="grabar" 	value="Grabar">		Guardar		</button>
+											<button type="button" name="buscar" 	id="buscar" 	value="Buscar">		Buscar		</button>
+											<button type="button" name="actualizar" id="actualizar" value="Actualizar">	Actualizar	</button>
+											<button type="button" name="eliminar" 	id="eliminar" 	value="Eliminar">	Eliminar	</button></th>
+								</tr>
+							</thead>
+					</table>  
+				</section>
+			</div>
+
+ 			<div id="cursor">
+				<section id="MostrarDatos">
+					<table border=1>
+						<caption><B>Estudiante(s) Registrado(s)</B></caption>
+							<thead>
+					    			<tr>
+						    			<td width=85><B><Center>Nombre</B></td>
+									<td width=85><B><Center>Apellido</B></td>
+									<td width=85><B><Center>T de Identificacion</B></td>
+									<td width=85><B><Center>N de dentificacion</B></td>
+									<td width=85><B><Center>Facultad</B></td>
+									<td width=85><B><Center>Programa</B></td>
+									<td width=85><B><Center>Semestre</B></td>
+									<td width=85><B><Center>Asignatura</B></td>
+					     			</tr>
+							</thead>
+						<tbody id="cursor">
+							<tr>
+								<td colspan="9">No hay elementos a mostrar</td>
+							</tr>
+						</tbody>
+		    			</table>
+				</section>
+			</div>    
+		</form>
+	</body>
+</html>
